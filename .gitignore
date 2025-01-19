@@ -29,3 +29,5 @@ MANIFEST.in
 schema.json
 video.mp4
 Untitled-1.ipynb
+.DS_Store
+poetry.lock
