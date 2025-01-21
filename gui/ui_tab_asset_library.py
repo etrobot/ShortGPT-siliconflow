@@ -129,7 +129,7 @@ class AssetLibrary(AbstractComponentUI):
         embed_height = 300
         embed_width = 300
         asset_link = data.iloc[row]['link']
-
+        embed_html = ''
         if 'youtube.com' in asset_link:
             asset_link_split = asset_link.split('?v=')
             if asset_link_split[0] == asset_link:
@@ -142,7 +142,7 @@ class AssetLibrary(AbstractComponentUI):
                 asset_link_split = asset_link_split[-1]
             asset_link = f"https://youtube.com/embed/{asset_link_split}"
             embed_html = f'<iframe width="{embed_width}" height="{embed_height}" src="{asset_link}"></iframe>'
-        elif 'public/' in asset_link:
+        elif 'public/' in asset_link or 'public/' in asset_link:
             asset_link = f"http://localhost:31415/gradio_api/file={asset_link}"
             file_ext = asset_link.split('.')[-1]
 

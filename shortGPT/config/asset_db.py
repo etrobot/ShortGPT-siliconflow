@@ -80,6 +80,7 @@ class AssetDatabase:
 
     @classmethod
     def get_df(cls, source=None) -> pd.DataFrame:
+        cls.sync_local_assets()
         data = []
         if source is None or source == 'local':
             for key, asset in cls.local_assets._get().items():
