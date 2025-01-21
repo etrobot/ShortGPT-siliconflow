@@ -21,7 +21,7 @@ from shortGPT.gpt.gpt_translate import translateContent
 
 class MultiLanguageTranslationEngine(AbstractContentEngine):
 
-    def __init__(self, voiceModule: VoiceModule, src_url: str = "", target_language: Language = Language.ENGLISH, use_captions=False, id=""):
+    def __init__(self, voiceModule: VoiceModule, src_url: str = "", target_language: Language = Language.ENGLISH, use_captions=False, id="", speech_blocks=None):
         super().__init__(id, "content_translation", target_language, voiceModule)
         if not id:
             self._db_should_translate = True
@@ -29,6 +29,16 @@ class MultiLanguageTranslationEngine(AbstractContentEngine):
                 self._db_src_url = src_url
             self._db_use_captions = use_captions
             self._db_target_language = target_language.value
+            if speech_blocks:
+                # 直接使用传入的 speech_blocks
+                self._db_speech_blocks = speech_blocks
+                self._db_original_language = "zh-CN"  # 设置源语言为中文
+                # 预先验证所需的字符数
+                expected_chars = len("".join([text for _, text in speech_blocks]))
+                chars_remaining = self.voiceModule.get_remaining_characters()
+                if chars_remaining < expected_chars:
+                    raise Exception(
+                        f"Your VoiceModule's key doesn't have enough characters to totally translate this video | Remaining: {chars_remaining} | Number of characters to translate: {expected_chars}")
 
         self.stepDict = {
             1: self._transcribe_audio,
@@ -39,10 +49,21 @@ class MultiLanguageTranslationEngine(AbstractContentEngine):
         }
 
     def _transcribe_audio(self):
+        """Modified to skip transcription when speech_blocks are provided"""
+        # 如果已有 speech_blocks，完全跳过识别步骤
+        if hasattr(self, '_db_speech_blocks') and self._db_speech_blocks:
+            self.logger(f"1/5 - Using provided speech blocks, skipping transcription...")
+            # 检查目标语言是否与源语言相同
+            if (ACRONYM_LANGUAGE_MAPPING.get(self._db_original_language) == Language(self._db_target_language)):
+                self._db_translated_timed_sentences = self._db_speech_blocks
+                self._db_should_translate = False
+            return
+
+        # 如果没有预设的 speech_blocks，使用原有的识别逻辑
         cached_translation = CONTENT_DB.content_collection.find_one({
-        "content_type": 'content_translation',
-        'src_url': self._db_src_url,
-        'ready_to_upload': True
+            "content_type": 'content_translation',
+            'src_url': self._db_src_url,
+            'ready_to_upload': True
         })
         if not (cached_translation and 'speech_blocks' in cached_translation and 'original_language' in cached_translation):
             video_audio, _ = get_asset_duration(self._db_src_url, isVideo=False)
@@ -56,13 +77,8 @@ class MultiLanguageTranslationEngine(AbstractContentEngine):
             self._db_translated_timed_sentences = self._db_speech_blocks
             self._db_should_translate = False
 
-        expected_chars = len("".join([text for _, text in self._db_speech_blocks]))
-        chars_remaining = self.voiceModule.get_remaining_characters()
-        if chars_remaining < expected_chars:
-            raise Exception(
-                f"Your VoiceModule's key doesn't have enough characters to totally translate this video | Remaining: {chars_remaining} | Number of characters to translate: {expected_chars}")
-
     def _translate_content(self):
+        """No changes needed here, works with both provided and transcribed speech blocks"""
         if (self._db_should_translate):
             self.verifyParameters(_db_speech_blocks=self._db_speech_blocks)
 

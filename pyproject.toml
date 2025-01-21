@@ -22,7 +22,8 @@ moviepy = "2.1.2"
 progress = "^1.6"
 questionary = "^2.1.0"
 edge-tts = "^7.0.0"
-whisper-timestamped = "*"
+azure-cognitiveservices-speech = "^1.42.0"
+
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

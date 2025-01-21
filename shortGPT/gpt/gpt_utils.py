@@ -3,7 +3,7 @@ import os
 import re
 from time import sleep, time
 
-import openai
+from openai import OpenAI
 import tiktoken
 import yaml
 
@@ -69,9 +69,9 @@ def open_file(filepath):
         return infile.read()
 
 
-def llm_completion(chat_prompt="", system="", temp=0.7, model="gpt-4o-mini", max_tokens=2000, remove_nl=True, conversation=None):
-    openai.api_key = ApiKeyManager.get_api_key("OPENAI_API_KEY")
-    openai.api_base = ApiKeyManager.get_api_key("OPENAI_BASE_URL")
+def llm_completion(chat_prompt="", system="", temp=0.7, model="deepseek-ai/DeepSeek-V2.5", max_tokens=3000, remove_nl=True, conversation=None):
+    print(ApiKeyManager.get_api_key("OPENAI_API_KEY"))
+    client = OpenAI(api_key= ApiKeyManager.get_api_key("OPENAI_API_KEY"), base_url= "https://api.siliconflow.cn/v1")
     max_retry = 5
     retry = 0
     error = ""
@@ -84,7 +84,7 @@ def llm_completion(chat_prompt="", system="", temp=0.7, model="gpt-4o-mini", max
                     {"role": "system", "content": system},
                     {"role": "user", "content": chat_prompt}
                 ]
-            response = openai.chat.completions.create(
+            response = client.chat.completions.create(
                 model=model,
                 messages=messages,
                 max_tokens=max_tokens,
